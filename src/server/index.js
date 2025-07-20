@@ -113,4 +113,7 @@ app.post("/player", (req, res) => {
   res.end();
 });
 
-app.listen(process.env.PORT || 8086);
+const PORT = process.env.PORT || 8086;
+app.listen(PORT, () => {
+  console.log(`now serving on port ${PORT}`);
+});

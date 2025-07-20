@@ -11,7 +11,7 @@ mmo minesweeper
 
 - ✅ multiplayer (duh)
 - ✅ perf optimize drawing board (reuse graphics, shared BG color)
-- put app online
+- ✅ put app online
 - ✅ scope grid updates to player viewport
 - even _more_ memory efficient grid representation
 - ✅ lose (hitting mine does something)

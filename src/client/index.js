@@ -4,7 +4,7 @@ import { clientChannel } from "./channel.js";
 
 import { Grid } from "./grid.js";
 
-const SIZE = 2000;
+const SIZE = 1000;
 const cellSize = 24;
 
 const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
