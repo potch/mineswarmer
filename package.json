@@ -1,0 +1,20 @@
+{
+  "name": "mineswarmer",
+  "version": "1.0.0",
+  "description": "here we go",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server/index.js",
+    "dev": "onchange -ik 'src/**/*' -- npm start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@potch/minifw": "^3.2.1",
+    "express": "^5.1.0",
+    "onchange": "^7.1.0"
+  }
+}
