@@ -58,6 +58,7 @@ async function start() {
   let screenHeight = signal(0);
   let viewportWidth = computed(() => Math.ceil(screenWidth.value / cellSize));
   let viewportHeight = computed(() => Math.ceil(screenHeight.value / cellSize));
+  let lastTouchEvent = null;
 
   const tilesCanvas = generateTiles();
 
@@ -306,6 +307,21 @@ async function start() {
 
   on(canvas, "mousemove", (e) => {
     updateCursorPosition(e);
+  });
+
+  on(canvas, "touchmove", (e) => {
+    const currentTouch = e.changedTouches[0];
+
+    if (lastTouchEvent && currentTouch) {
+      const deltaX = lastTouchEvent.clientX - currentTouch.clientX;
+      const deltaY = lastTouchEvent.clientY - currentTouch.clientY;
+      updatePosition(deltaX, deltaY);
+      updateCursorPosition(currentTouch);
+    }
+    lastTouchEvent = currentTouch;
+  });
+  on(canvas, "touchend", () => {
+    lastTouchEvent = null;
   });
 
   on(canvas, "wheel", (e) => {
