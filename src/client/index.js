@@ -86,6 +86,11 @@ async function start() {
     ];
   }
 
+  function updateCursorPosition(e) {
+    let gridPos = projectMouse(e);
+    cursorCell.value = [gridPos[0] | 0, gridPos[1] | 0];
+  }
+
   function resizeScreen() {
     screenWidth.value = window.innerWidth;
     screenHeight.value = window.innerHeight;
@@ -300,8 +305,7 @@ async function start() {
   });
 
   on(canvas, "mousemove", (e) => {
-    let gridPos = projectMouse(e);
-    cursorCell.value = [gridPos[0] | 0, gridPos[1] | 0];
+    updateCursorPosition(e);
   });
 
   on(canvas, "wheel", (e) => {
