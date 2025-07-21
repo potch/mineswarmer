@@ -73,6 +73,19 @@ async function start() {
     ];
   });
 
+  function updatePosition(deltaX, deltaY) {
+    position.value = [
+      Math.min(
+        SIZE * cellSize - screenWidth.value,
+        Math.max(0, position.value[0] + deltaX)
+      ),
+      Math.min(
+        SIZE * cellSize - screenHeight.value,
+        Math.max(0, position.value[1] + deltaY)
+      ),
+    ];
+  }
+
   function resizeScreen() {
     screenWidth.value = window.innerWidth;
     screenHeight.value = window.innerHeight;
@@ -292,16 +305,7 @@ async function start() {
   });
 
   on(canvas, "wheel", (e) => {
-    position.value = [
-      Math.min(
-        SIZE * cellSize - screenWidth.value,
-        Math.max(0, position.value[0] + e.deltaX)
-      ),
-      Math.min(
-        SIZE * cellSize - screenHeight.value,
-        Math.max(0, position.value[1] + e.deltaY)
-      ),
-    ];
+    updatePosition(e.deltaX, e.deltaY);
   });
 
   on(window, "resize", resizeScreen);
