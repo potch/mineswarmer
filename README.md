@@ -20,6 +20,7 @@ mmo minesweeper
   - ✅ scrolling
   - ✅ setting mines
 - mine chain-reactions?
-- minimap?
+- 🚧 minimap?
+  - minimap gets bigger when moving?
 - victory!
 - game reset

@@ -5,13 +5,15 @@ import { clientChannel } from "./channel.js";
 import { Grid } from "./grid.js";
 
 const SIZE = 1000;
-const cellSize = 24;
+const cellSize = 28;
 
 const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
 const scale = (a, s = 1) => [a[0] * s, a[1] * s];
 
-function generateTiles() {
+function generateTiles(cellSize, dpi) {
+  cellSize *= dpi;
+  const border = 2 * dpi;
   const canvas = dom("canvas", { width: cellSize * 4, height: cellSize });
   const ctx = canvas.getContext("2d");
 
@@ -20,11 +22,11 @@ function generateTiles() {
   ctx.fillStyle = "#ccc";
   ctx.fillRect(0, 0, cellSize, cellSize);
   ctx.fillStyle = "#eee";
-  ctx.fillRect(0, 0, 2, cellSize - 2);
-  ctx.fillRect(0, 0, cellSize - 2, 2);
+  ctx.fillRect(0, 0, border, cellSize - border);
+  ctx.fillRect(0, 0, cellSize - border, border);
   ctx.fillStyle = "#888";
-  ctx.fillRect(2, cellSize - 2, cellSize - 2, 2);
-  ctx.fillRect(cellSize - 2, 2, 2, cellSize - 2);
+  ctx.fillRect(border, cellSize - border, cellSize - border, border);
+  ctx.fillRect(cellSize - border, border, border, cellSize - border);
   ctx.restore();
 
   // empty cleared cell
@@ -33,7 +35,7 @@ function generateTiles() {
   ctx.fillStyle = "#aaa";
   ctx.fillRect(0, 0, cellSize, cellSize);
   ctx.fillStyle = "#bbb";
-  ctx.fillRect(2, 2, cellSize - 2, cellSize - 2);
+  ctx.fillRect(border, border, cellSize - border, cellSize - border);
   ctx.restore();
 
   return canvas;
@@ -57,6 +59,7 @@ async function start() {
   // set up data
   let screenWidth = signal(0);
   let screenHeight = signal(0);
+  let dpi = signal(window.devicePixelRatio);
   let viewportWidth = computed(() => Math.ceil(screenWidth.value / cellSize));
   let viewportHeight = computed(() => Math.ceil(screenHeight.value / cellSize));
   let lastTouchEvent = null;
@@ -65,8 +68,8 @@ async function start() {
   // create game UI
 
   const canvas = dom("canvas", {
-    width: screenWidth,
-    height: screenHeight,
+    width: computed(() => screenWidth.value * dpi.value),
+    height: computed(() => screenHeight.value * dpi.value),
   });
 
   const minimap = dom("canvas", {
@@ -115,7 +118,8 @@ async function start() {
   );
   document.body.append(game);
 
-  const tilesCanvas = generateTiles();
+  const tilesCanvas = computed(() => generateTiles(cellSize, dpi.value));
+  const tileSize = computed(() => cellSize * dpi.value);
 
   const position = signal([0, 0]);
   const cursorCell = signal(null);
@@ -149,6 +153,7 @@ async function start() {
 
   function resizeScreen() {
     const grid = document.querySelector("#grid");
+    dpi.value = window.devicePixelRatio;
     screenWidth.value = grid.offsetWidth;
     screenHeight.value = grid.offsetHeight;
   }
@@ -205,11 +210,14 @@ async function start() {
   function draw() {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let tSize = tileSize.value;
+    let tiles = tilesCanvas.value;
     let pos = position.value;
+    let d = dpi.value;
     let gridX = (pos[0] / cellSize) | 0;
     let gridY = (pos[1] / cellSize) | 0;
-    let offsetX = pos[0] % cellSize;
-    let offsetY = pos[1] % cellSize;
+    let offsetX = (pos[0] % cellSize) * d;
+    let offsetY = (pos[1] % cellSize) * d;
     let vw = viewportWidth.value;
     let vh = viewportHeight.value;
     let cursor = cursorCell.value;
@@ -227,49 +235,49 @@ async function start() {
         const cell = g.at(cellX, cellY);
 
         ctx.save();
-        ctx.translate(x * cellSize - offsetX, y * cellSize - offsetY);
+        ctx.translate(x * tSize - offsetX, y * tSize - offsetY);
 
         if (!cell || !cell?.dug) {
-          drawTile(tilesCanvas, cellSize, 0, ctx);
+          drawTile(tiles, tSize, 0, ctx);
         }
 
         if (cell?.dug) {
-          drawTile(tilesCanvas, cellSize, 1, ctx);
+          drawTile(tiles, tSize, 1, ctx);
 
-          ctx.font = "bold 16px sans-serif";
+          ctx.font = `bold ${d * 16}px sans-serif`;
           ctx.fillStyle = "#000";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
 
-          if (cell.mine) {
-            ctx.fillText("💣", cellSize / 2, cellSize / 2 + 2);
+          if (cell.mine && !cell.boom) {
+            ctx.fillText("💣", tSize / 2, tSize / 2 + 2);
           }
           if (cell.count) {
-            ctx.fillText(cell.count, cellSize / 2, cellSize / 2 + 2);
+            ctx.fillText(cell.count, tSize / 2, tSize / 2 + 2);
           }
         }
 
         if (cell?.marked) {
-          drawTile(tilesCanvas, cellSize, 0, ctx);
+          drawTile(tiles, tSize, 0, ctx);
 
-          ctx.font = "bold 13px sans-serif";
+          ctx.font = `bold ${13 * d}px sans-serif`;
           ctx.fillStyle = "#000";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
 
-          ctx.fillText("🚩", cellSize / 2, cellSize / 2);
+          ctx.fillText("🚩", tSize / 2, tSize / 2);
         }
 
         if (cell?.boom) {
           if (cell.mine) {
-            ctx.font = "bold 13px sans-serif";
+            ctx.font = `bold ${13 * d}px sans-serif`;
             ctx.fillStyle = "#000";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText("💣", cellSize / 2, cellSize / 2 + 2);
+            ctx.fillText("💣", tSize / 2, tSize / 2 + 2);
           }
           ctx.fillStyle = "rgba(192, 0, 0, .5)";
-          ctx.fillRect(0, 0, cellSize, cellSize);
+          ctx.fillRect(0, 0, tSize, tSize);
         }
 
         ctx.restore();
@@ -283,24 +291,24 @@ async function start() {
       // }
       ctx.save();
       ctx.translate(
-        (px - gridX) * cellSize - offsetX,
-        (py - gridY) * cellSize - offsetY
+        (px - gridX) * tSize - offsetX,
+        (py - gridY) * tSize - offsetY
       );
       ctx.strokeStyle = `hsla(${id * 360 * 0.618}, 90%, 60%, .75)`;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(1, 1, cellSize - 2, cellSize - 2);
+      ctx.lineWidth = 2 * d;
+      ctx.strokeRect(1, 1, tSize - 2, tSize - 2);
       ctx.restore();
     }
     if (cursor) {
       const [px, py] = cursor;
       ctx.save();
       ctx.translate(
-        (px - gridX) * cellSize - offsetX,
-        (py - gridY) * cellSize - offsetY
+        (px - gridX) * tSize - offsetX,
+        (py - gridY) * tSize - offsetY
       );
       ctx.strokeStyle = "blue";
-      ctx.lineWidth = 4;
-      ctx.strokeRect(0, 0, cellSize - 1, cellSize - 1);
+      ctx.lineWidth = 4 * d;
+      ctx.strokeRect(0, 0, tSize - 1, tSize - 1);
       ctx.restore();
     }
   }
@@ -323,8 +331,16 @@ async function start() {
       },
     });
 
+  const getOffset = (el) => {
+    if (!el) return [0, 0];
+    return add([el.offsetLeft, el.offsetTop], getOffset(el.offsetParent));
+  };
+
   const projectMouse = (e) =>
-    scale(add([e.clientX, e.clientY], position.value), 1 / cellSize);
+    scale(
+      add(sub([e.clientX, e.clientY], getOffset(e.target)), position.value),
+      1 / cellSize
+    );
 
   // allow right click
   on(canvas, "contextmenu", (e) => e.preventDefault());
@@ -384,7 +400,7 @@ async function start() {
   });
 
   const momentumBlend = 0.5;
-  const momentumDecay = 0.1;
+  const momentumDecay = 0.05;
   const lerp = (a, b, t) => a * (1 - t) + b * t;
   on(canvas, "touchstart", (e) => {
     const currentTouch = e.changedTouches[0];

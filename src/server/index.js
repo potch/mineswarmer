@@ -78,29 +78,22 @@ app.use("/live", sseHandler);
 app.post("/click", (req, res) => {
   const cellX = req.body[0] | 0;
   const cellY = req.body[1] | 0;
-  console.log("digging", cellX, cellY);
   grid.floodDig(cellX, cellY);
-  console.log("sending post-dig update");
   sendGridUpdate();
 
-  console.log("done sending post-dig update");
   res.end();
 });
 
 app.post("/mark", (req, res) => {
   const cellX = req.body[0] | 0;
   const cellY = req.body[1] | 0;
-  console.log("mark", cellX, cellY);
   grid.mark(cellX, cellY);
-  console.log("sending post-mark update");
   sendGridUpdate();
-  console.log("done sending post-mark update");
   res.end();
 });
 
 app.post("/player", (req, res) => {
   const { id, position, rect } = req.body;
-  console.log(id, position, rect);
   const player = players.get(id);
   if (!player) return;
   player.setPosition(position);
