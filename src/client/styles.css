@@ -1,3 +1,8 @@
+html,
+body {
+  overscroll-behavior: none;
+}
+
 #grid {
   position: absolute;
   inset: 0;

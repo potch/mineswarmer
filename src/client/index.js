@@ -58,6 +58,7 @@ async function start() {
   let screenHeight = signal(0);
   let viewportWidth = computed(() => Math.ceil(screenWidth.value / cellSize));
   let viewportHeight = computed(() => Math.ceil(screenHeight.value / cellSize));
+  let lastTouchEvent = null;
 
   const tilesCanvas = generateTiles();
 
@@ -72,6 +73,24 @@ async function start() {
       [x + viewportWidth.value, y + viewportHeight.value],
     ];
   });
+
+  function updatePosition(deltaX, deltaY) {
+    position.value = [
+      Math.min(
+        SIZE * cellSize - screenWidth.value,
+        Math.max(0, position.value[0] + deltaX)
+      ),
+      Math.min(
+        SIZE * cellSize - screenHeight.value,
+        Math.max(0, position.value[1] + deltaY)
+      ),
+    ];
+  }
+
+  function updateCursorPosition(e) {
+    let gridPos = projectMouse(e);
+    cursorCell.value = [gridPos[0] | 0, gridPos[1] | 0];
+  }
 
   function resizeScreen() {
     screenWidth.value = window.innerWidth;
@@ -287,21 +306,26 @@ async function start() {
   });
 
   on(canvas, "mousemove", (e) => {
-    let gridPos = projectMouse(e);
-    cursorCell.value = [gridPos[0] | 0, gridPos[1] | 0];
+    updateCursorPosition(e);
+  });
+
+  on(canvas, "touchmove", (e) => {
+    const currentTouch = e.changedTouches[0];
+
+    if (lastTouchEvent && currentTouch) {
+      const deltaX = lastTouchEvent.clientX - currentTouch.clientX;
+      const deltaY = lastTouchEvent.clientY - currentTouch.clientY;
+      updatePosition(deltaX, deltaY);
+      updateCursorPosition(currentTouch);
+    }
+    lastTouchEvent = currentTouch;
+  });
+  on(canvas, "touchend", () => {
+    lastTouchEvent = null;
   });
 
   on(canvas, "wheel", (e) => {
-    position.value = [
-      Math.min(
-        SIZE * cellSize - screenWidth.value,
-        Math.max(0, position.value[0] + e.deltaX)
-      ),
-      Math.min(
-        SIZE * cellSize - screenHeight.value,
-        Math.max(0, position.value[1] + e.deltaY)
-      ),
-    ];
+    updatePosition(e.deltaX, e.deltaY);
   });
 
   on(window, "resize", resizeScreen);
