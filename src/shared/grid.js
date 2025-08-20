@@ -53,10 +53,12 @@ export class Grid {
     return count;
   }
   floodDig(x, y) {
-    if (this.at(x, y)?.boom) {
+    const mine = this.at(x, y);
+    if (mine?.marked) return;
+    if (mine?.boom) {
       return;
     }
-    if (this.at(x, y)?.mine) {
+    if (mine?.mine) {
       this.floodBoom(x, y);
       return;
     }
@@ -67,7 +69,11 @@ export class Grid {
       let [cx, cy] = toDig.pop();
       if (Math.hypot(cx - x, cy - y) > maxFloodDistance) continue;
       if (cx < 0 || cy < 0 || cx > SIZE - 1 || cy > SIZE - 1) continue;
-      if (this.at(cx, cy)) continue;
+      const existing = this.at(cx, cy);
+      // if not existing, dig
+      // if existing but not marked or dug, dig
+      if (existing && (existing.marked || existing.dug || existing.boom))
+        continue;
       const count = this.dig(cx, cy);
       this.set(cx, cy, {
         dug: true,

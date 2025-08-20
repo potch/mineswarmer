@@ -32,7 +32,7 @@ function generateTiles() {
   ctx.translate(cellSize, 0);
   ctx.fillStyle = "#aaa";
   ctx.fillRect(0, 0, cellSize, cellSize);
-  ctx.fillStyle = "#ccc";
+  ctx.fillStyle = "#bbb";
   ctx.fillRect(2, 2, cellSize - 2, cellSize - 2);
   ctx.restore();
 
@@ -54,11 +54,58 @@ function drawTile(tileset, tileSize, tile, destinationCtx) {
 }
 
 async function start() {
+  // set up data
   let screenWidth = signal(0);
   let screenHeight = signal(0);
   let viewportWidth = computed(() => Math.ceil(screenWidth.value / cellSize));
   let viewportHeight = computed(() => Math.ceil(screenHeight.value / cellSize));
   let lastTouchEvent = null;
+
+  // create game UI
+
+  const canvas = dom("canvas", {
+    width: screenWidth,
+    height: screenHeight,
+  });
+
+  effect(() => {
+    console.log(screenWidth.value, screenHeight.value);
+  });
+
+  const game = dom(
+    "div",
+    { id: "game" },
+    dom("div", { id: "grid" }, canvas),
+    dom(
+      "div",
+      {
+        id: "hud",
+      },
+      "mineswarmer",
+      dom(
+        "form",
+        { id: "mode", onsubmit: (e) => e.preventDefault() },
+        dom(
+          "label",
+          {},
+          dom("input", {
+            type: "radio",
+            checked: true,
+            name: "mode",
+            value: "dig",
+          }),
+          "🪏"
+        ),
+        dom(
+          "label",
+          {},
+          dom("input", { type: "radio", name: "mode", value: "flag" }),
+          "🚩"
+        )
+      )
+    )
+  );
+  document.body.append(game);
 
   const tilesCanvas = generateTiles();
 
@@ -93,8 +140,9 @@ async function start() {
   }
 
   function resizeScreen() {
-    screenWidth.value = window.innerWidth;
-    screenHeight.value = window.innerHeight;
+    const grid = document.querySelector("#grid");
+    screenWidth.value = grid.offsetWidth;
+    screenHeight.value = grid.offsetHeight;
   }
 
   resizeScreen();
@@ -121,13 +169,6 @@ async function start() {
       playerId = msg.id;
     }
   });
-
-  const canvas = dom("canvas", {
-    id: "grid",
-    width: screenWidth,
-    height: screenHeight,
-  });
-  document.body.append(canvas);
 
   effect(() => {
     // console.log(
@@ -243,6 +284,24 @@ async function start() {
     }
   }
 
+  const dig = (pos) =>
+    fetch("/click", {
+      method: "post",
+      body: JSON.stringify(pos),
+      headers: {
+        "content-type": "application/json",
+      },
+    });
+
+  const mark = (pos) =>
+    fetch("/mark", {
+      method: "post",
+      body: JSON.stringify(pos),
+      headers: {
+        "content-type": "application/json",
+      },
+    });
+
   const projectMouse = (e) =>
     scale(add([e.clientX, e.clientY], position.value), 1 / cellSize);
 
@@ -254,26 +313,20 @@ async function start() {
     let gridPos = projectMouse(e);
     if (e.button === 2) {
       // right click
-      fetch("/mark", {
-        method: "post",
-        body: JSON.stringify(gridPos),
-        headers: {
-          "content-type": "application/json",
-        },
-      });
+      mark(gridPos);
     }
   });
 
   on(canvas, "click", (e) => {
     e.preventDefault();
     let gridPos = projectMouse(e);
-    fetch("/click", {
-      method: "post",
-      body: JSON.stringify(gridPos),
-      headers: {
-        "content-type": "application/json",
-      },
-    });
+    const mode = document.querySelector("#mode").elements.mode.value;
+    if (mode === "dig") {
+      dig(gridPos);
+    }
+    if (mode === "flag") {
+      mark(gridPos);
+    }
   });
 
   const _sendPosition = () => {

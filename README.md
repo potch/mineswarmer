@@ -15,9 +15,10 @@ mmo minesweeper
 - ✅ scope grid updates to player viewport
 - even _more_ memory efficient grid representation
 - ✅ lose (hitting mine does something)
-- BUG: can't reveal square after flagging
-- mobile support
-  - interaction + scrolling
+- ✅ BUG: can't reveal square after flagging
+- ✅ mobile support
+  - ✅ scrolling
+  - ✅ setting mines
 - mine chain-reactions?
 - minimap?
 - victory!
