@@ -412,7 +412,6 @@ async function start() {
   });
   function momentumScroll() {
     updatePosition(...scrollMomentum);
-    console.log(Math.hypot(...scrollMomentum));
     scrollMomentum = [
       lerp(scrollMomentum[0], 0, momentumDecay),
       lerp(scrollMomentum[1], 0, momentumDecay),
