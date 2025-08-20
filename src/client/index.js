@@ -60,12 +60,19 @@ async function start() {
   let viewportWidth = computed(() => Math.ceil(screenWidth.value / cellSize));
   let viewportHeight = computed(() => Math.ceil(screenHeight.value / cellSize));
   let lastTouchEvent = null;
+  let scrollMomentum = [0, 0];
 
   // create game UI
 
   const canvas = dom("canvas", {
     width: screenWidth,
     height: screenHeight,
+  });
+
+  const minimap = dom("canvas", {
+    id: "minimap",
+    width: 72,
+    height: 72,
   });
 
   effect(() => {
@@ -82,6 +89,7 @@ async function start() {
         id: "hud",
       },
       "mineswarmer",
+      minimap,
       dom(
         "form",
         { id: "mode", onsubmit: (e) => e.preventDefault() },
@@ -179,6 +187,19 @@ async function start() {
     //   position.value,
     //   cursorCell.value
     // );
+  });
+
+  effect(() => {
+    let pos = position.value;
+    let x = ((pos[0] / cellSize / SIZE) * minimap.width) | 0;
+    let y = ((pos[1] / cellSize / SIZE) * minimap.height) | 0;
+    let w = Math.ceil((viewportWidth.value / SIZE) * minimap.height);
+    let h = Math.ceil((viewportHeight.value / SIZE) * minimap.width);
+    const ctx = minimap.getContext("2d");
+    ctx.fillStyle = "#bbb";
+    ctx.fillRect(0, 0, minimap.width, minimap.height);
+    ctx.fillStyle = "red";
+    ctx.fillRect(x, y, w, h);
   });
 
   function draw() {
@@ -362,6 +383,14 @@ async function start() {
     updateCursorPosition(e);
   });
 
+  const momentumBlend = 0.5;
+  const momentumDecay = 0.1;
+  const lerp = (a, b, t) => a * (1 - t) + b * t;
+  on(canvas, "touchstart", (e) => {
+    const currentTouch = e.changedTouches[0];
+    lastTouchEvent = currentTouch;
+    scrollMomentum = [0, 0];
+  });
   on(canvas, "touchmove", (e) => {
     const currentTouch = e.changedTouches[0];
 
@@ -369,13 +398,29 @@ async function start() {
       const deltaX = lastTouchEvent.clientX - currentTouch.clientX;
       const deltaY = lastTouchEvent.clientY - currentTouch.clientY;
       updatePosition(deltaX, deltaY);
+      scrollMomentum = [
+        lerp(scrollMomentum[0], deltaX, momentumBlend),
+        lerp(scrollMomentum[1], deltaY, momentumBlend),
+      ];
       updateCursorPosition(currentTouch);
     }
     lastTouchEvent = currentTouch;
   });
   on(canvas, "touchend", () => {
     lastTouchEvent = null;
+    momentumScroll();
   });
+  function momentumScroll() {
+    updatePosition(...scrollMomentum);
+    console.log(Math.hypot(...scrollMomentum));
+    scrollMomentum = [
+      lerp(scrollMomentum[0], 0, momentumDecay),
+      lerp(scrollMomentum[1], 0, momentumDecay),
+    ];
+    if (Math.hypot(...scrollMomentum) > 0.001) {
+      requestAnimationFrame(momentumScroll);
+    }
+  }
 
   on(canvas, "wheel", (e) => {
     updatePosition(e.deltaX, e.deltaY);
