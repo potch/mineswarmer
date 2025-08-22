@@ -1,5 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap");
+
 * {
   box-sizing: border-box;
+  margin: 0;
 }
 
 html,
@@ -7,7 +10,12 @@ body {
   overscroll-behavior: none;
   color: #fff;
   background: #888;
-  font-family: sans-serif;
+  font-family: Orbitron;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 0.5rem;
 }
 
 #game {
@@ -40,8 +48,11 @@ body {
   gap: 1rem;
   align-items: center;
   justify-content: space-between;
-  border-top: 2px solid #eee;
-  box-shadow: inset 0 2px #ccc, 0 -2px 4px rgba(0, 0, 0, 0.5);
+  border: 2px solid #eee;
+  border-color: #eee #000 #000 #eee;
+  margin: 0 0.5rem 0.5rem;
+  box-shadow: inset 2px 2px #ccc, inset -2px -2px #888;
+
   position: relative;
   z-index: 100;
 }
@@ -76,4 +87,13 @@ body {
 #minimap {
   border: 2px solid;
   border-color: #888 #eee #eee #888;
+  width: 64px;
+  height: 64px;
+  transform-origin: bottom left;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+#minimap.scrolling {
+  transform: scale(2);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
 }

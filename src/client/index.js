@@ -1,4 +1,4 @@
-import { signal, computed, effect, dom, on } from "./munifw.js";
+import { signal, computed, effect, dom, on, event } from "./munifw.js";
 
 import { clientChannel } from "./channel.js";
 
@@ -64,6 +64,7 @@ async function start() {
   let viewportHeight = computed(() => Math.ceil(screenHeight.value / cellSize));
   let lastTouchEvent = null;
   let scrollMomentum = [0, 0];
+  const [emitScroll, onScroll] = event();
 
   // create game UI
 
@@ -74,12 +75,8 @@ async function start() {
 
   const minimap = dom("canvas", {
     id: "minimap",
-    width: 72,
-    height: 72,
-  });
-
-  effect(() => {
-    console.log(screenWidth.value, screenHeight.value);
+    width: 128,
+    height: 128,
   });
 
   const game = dom(
@@ -91,8 +88,8 @@ async function start() {
       {
         id: "hud",
       },
-      "mineswarmer",
       minimap,
+      dom("h1", {}, "mineswarmer"),
       dom(
         "form",
         { id: "mode", onsubmit: (e) => e.preventDefault() },
@@ -133,6 +130,15 @@ async function start() {
     ];
   });
 
+  let scrollTimeout;
+  onScroll(() => {
+    minimap.classList.add("scrolling");
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      minimap.classList.remove("scrolling");
+    }, 1000);
+  });
+
   function updatePosition(deltaX, deltaY) {
     position.value = [
       Math.min(
@@ -144,6 +150,7 @@ async function start() {
         Math.max(0, position.value[1] + deltaY)
       ),
     ];
+    emitScroll();
   }
 
   function updateCursorPosition(e) {
