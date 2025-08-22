@@ -19,6 +19,41 @@ export const rectEach = ([x1, y1], [x2, y2], fn) => {
   }
 };
 
+const CELL_DUG = 0b0001;
+const CELL_MINE = 0b0010;
+const CELL_MARKED = 0b0100;
+const CELL_BOOM = 0b1000;
+const CELL_COUNT = 0b10000;
+
+const encodeCell = (cell) => {
+  let byte = 0;
+  if (cell) {
+    if (cell.dug) byte |= CELL_DUG;
+    if (cell.mine) byte |= CELL_MINE;
+    if (cell.marked) byte |= CELL_MARKED;
+    if (cell.boom) byte |= CELL_BOOM;
+    if (cell.count) {
+      byte |= CELL_COUNT;
+      byte |= (cell.count - 1) << 5;
+    }
+  }
+  return byte;
+};
+
+export const decodeCell = (byte) => {
+  if (!byte) return null;
+  let cell = {
+    dug: byte & CELL_DUG,
+    mine: byte & CELL_MINE,
+    marked: byte & CELL_MARKED,
+    boom: byte & CELL_BOOM,
+  };
+  if (byte & CELL_COUNT) {
+    cell.count = (byte >> 5) + 1;
+  }
+  return cell;
+};
+
 export class Grid {
   constructor(size) {
     this.size = size;
@@ -118,17 +153,26 @@ export class Grid {
     const cells = [];
     rectEach(tl, br, ([x, y]) => {
       const c = this.at(x, y);
-      if (c) cells.push([y * size + x, c]);
+      cells.push(encodeCell(c));
     });
     return {
       size: size,
       rect: [tl, br],
-      cells,
+      cells: btoa(cells.map((b) => String.fromCharCode(b)).join("")),
     };
   }
-  updateRect({ cells }) {
-    for (let [idx, cell] of cells) {
-      this.cells.set(idx, cell);
+  updateRect({ size, rect, cells }) {
+    cells = atob(cells)
+      .split("")
+      .map((c) => c.charCodeAt(0));
+    let [tl, br] = rect;
+    let width = br[0] - tl[0] + 1;
+    for (let i = 0; i < cells.length; i++) {
+      const encodedCell = cells[i];
+      const x = tl[0] + (i % width);
+      const y = tl[1] + ((i / width) | 0);
+      const idx = y * size + x;
+      this.cells.set(idx, decodeCell(encodedCell));
     }
   }
   static deserialize(o) {

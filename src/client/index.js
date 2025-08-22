@@ -75,8 +75,8 @@ async function start() {
 
   const minimap = dom("canvas", {
     id: "minimap",
-    width: 128,
-    height: 128,
+    width: 128 * dpi.value,
+    height: 128 * dpi.value,
   });
 
   const game = dom(
@@ -394,7 +394,7 @@ async function start() {
       positionTimeout = setTimeout(() => {
         _sendPosition();
         positionTimeout = 0;
-      }, 250);
+      }, 500);
     }
   };
 

@@ -14,6 +14,9 @@ mmo minesweeper
 - ✅ put app online
 - ✅ scope grid updates to player viewport
 - even _more_ memory efficient grid representation
+  - can you gzip SSE payloads? (yes but slow)
+  - ✅ express each cell as a byte
+  - RLE for grid rect updates?
 - ✅ lose (hitting mine does something)
 - ✅ BUG: can't reveal square after flagging
 - ✅ mobile support

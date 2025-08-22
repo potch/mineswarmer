@@ -96,13 +96,16 @@ app.post("/player", (req, res) => {
   const { id, position, rect } = req.body;
   const player = players.get(id);
   if (!player) return;
+  let oldRect = player.rect;
   player.setPosition(position);
   player.setRect(rect);
   sendPlayers();
-  player.send({
-    type: "grid-rect",
-    data: grid.serializeRect(expandRect(rect, 20)),
-  });
+  if (JSON.stringify(oldRect) !== JSON.stringify(rect)) {
+    player.send({
+      type: "grid-rect",
+      data: grid.serializeRect(expandRect(rect, 20)),
+    });
+  }
   res.end();
 });
 
